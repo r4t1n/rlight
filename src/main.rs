@@ -1,4 +1,3 @@
-use glob::glob;
 use std::env;
 use std::fs;
 
@@ -13,16 +12,18 @@ fn main() {
 }
 
 fn get_backlight_devices() -> Vec<String> {
-    let sys_backlight_path: &str = "/sys/class/backlight/*";
+    let sys_backlight_path = fs::read_dir("/sys/class/backlight").unwrap();
     let mut backlight_devices: Vec<String> = Vec::new();
 
-    for entry in glob(sys_backlight_path).expect("Failed to read glob pattern") {
-        match entry {
-            Ok(backlight_device) => {
-                backlight_devices.push(backlight_device.into_os_string().into_string().unwrap())
-            }
-            Err(e) => println!("{:?}", e),
-        }
+    for backlight_device in sys_backlight_path {
+        backlight_devices.push(
+            backlight_device
+                .unwrap()
+                .path()
+                .into_os_string()
+                .into_string()
+                .unwrap(),
+        )
     }
 
     backlight_devices
