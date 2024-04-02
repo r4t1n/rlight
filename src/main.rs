@@ -33,20 +33,38 @@ fn main() {
         get_backlight_brightness(backlight_brightness_path.clone(), backlight_device);
 
     if args.brightness.is_empty() {
-        let brightness: f64 =
-            (backlight_brightness as f64 / backlight_max_brightness as f64 * 100.0).round();
+        let brightness: f32 =
+            (backlight_brightness as f32 / backlight_max_brightness as f32 * 100.0).round();
         println!("{}%", brightness);
         process::exit(0);
     }
 
-    let user_brightness: u8 = args.brightness.replace('%', "").parse().unwrap();
+    let operation: char = if args.brightness.starts_with('+') {
+        '+'
+    } else if args.brightness.starts_with('_') {
+        '-'
+    } else {
+        ' '
+    };
+
+    let user_brightness: u8 = args
+        .brightness
+        .replace(&['%', '+', '_'], "")
+        .parse()
+        .unwrap();
+
     if user_brightness > 100 {
         eprintln!("Error: can not set brightness to over 100%");
         process::exit(1);
     }
 
-    let absolute_brightness: u32 = backlight_max_brightness * user_brightness as u32 / 100;
-    write_backlight_brightness(backlight_brightness_path, absolute_brightness)
+    let absolute_brightness: u32 = match operation {
+        '+' => backlight_brightness + backlight_max_brightness * user_brightness as u32 / 100,
+        '-' => backlight_brightness - backlight_max_brightness * user_brightness as u32 / 100,
+        _ => backlight_max_brightness * user_brightness as u32 / 100,
+    };
+
+    write_backlight_brightness(backlight_brightness_path, absolute_brightness);
 }
 
 fn get_backlight_devices() -> Vec<String> {
