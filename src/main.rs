@@ -1,42 +1,57 @@
+use clap::Parser;
 use std::env;
 use std::fs;
+use std::path;
 use std::process;
 
+#[derive(Parser)]
+struct Args {
+    #[clap(default_value = "")]
+    brightness: String,
+
+    #[clap(short, long)]
+    list: bool,
+}
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        eprintln!("Error: one argument not provided");
-        process::exit(1);
+    let args: Args = Args::parse();
+    let backlight_devices: Vec<String> = get_backlight_devices();
+
+    if args.list {
+        list_backlight_device_names(backlight_devices.clone());
     }
 
-    let user_brightness: &String = &args[1];
-    let user_brightness: u8 = match user_brightness.replace('%', "").parse::<u8>() {
-        Ok(t) => t,
-        Err(e) => panic!("Error parsing user brightness: {e}"),
+    let backlight_default_device: String = get_backlight_default_device();
+    let backlight_device: String = if backlight_default_device.is_empty() {
+        backlight_devices[0].to_string()
+    } else {
+        backlight_default_device
     };
 
+    let backlight_brightness_path: String = format!("{}/brightness", backlight_device);
+    let (backlight_brightness, backlight_max_brightness): (u32, u32) =
+        get_backlight_brightness(backlight_brightness_path.clone(), backlight_device);
+
+    if args.brightness.is_empty() {
+        let brightness: f64 =
+            (backlight_brightness as f64 / backlight_max_brightness as f64 * 100.0).round();
+        println!("{}%", brightness);
+        process::exit(0);
+    }
+
+    let user_brightness: u8 = args.brightness.replace('%', "").parse().unwrap();
     if user_brightness > 100 {
         eprintln!("Error: can not set brightness to over 100%");
         process::exit(1);
     }
 
-    let backlight_devices: Vec<String> = get_backlight_devices();
-    let backlight_brightness_path: String = format!("{}/brightness", backlight_devices[0]);
-    let backlight_max_brightness_path: String = format!("{}/max_brightness", backlight_devices[0]);
-
-    let backlight_max_brightness: u32 = fs::read_to_string(backlight_max_brightness_path.clone())
-        .unwrap()
-        .trim_end()
-        .parse()
-        .unwrap();
-
-    let brightness: u32 = backlight_max_brightness * user_brightness as u32 / 100;
-    write_brightness(backlight_brightness_path, brightness)
+    let absolute_brightness: u32 = backlight_max_brightness * user_brightness as u32 / 100;
+    write_backlight_brightness(backlight_brightness_path, absolute_brightness)
 }
 
 fn get_backlight_devices() -> Vec<String> {
     let sys_backlight_path: &str = "/sys/class/backlight";
-    let backlight_dir = fs::read_dir("/sys/class/backlight").unwrap();
+    let backlight_dir = fs::read_dir(sys_backlight_path).unwrap();
     let mut backlight_devices: Vec<String> = Vec::new();
 
     for backlight_device in backlight_dir {
@@ -58,7 +73,72 @@ fn get_backlight_devices() -> Vec<String> {
     backlight_devices
 }
 
-fn write_brightness(backlight_brightness_path: String, brightness: u32) {
+fn list_backlight_device_names(backlight_devices: Vec<String>) {
+    let mut backlight_device_names: Vec<String> = Vec::new();
+    let mut index: u8 = 1;
+    for backlight_device in backlight_devices.iter() {
+        backlight_device_names.push(format!(
+            "[{}] {}",
+            index,
+            backlight_device.replace("/sys/class/backlight/", "")
+        ));
+
+        index += 1;
+    }
+
+    for backlight_device_name in backlight_device_names.iter() {
+        println!("{}", backlight_device_name)
+    }
+
+    process::exit(0);
+}
+
+fn get_backlight_default_device() -> String {
+    let mut user_home_dir: String = String::new();
+    match env::home_dir() {
+        Some(home_dir) => {
+            user_home_dir = home_dir
+                .into_os_string()
+                .into_string()
+                .expect("Error: could not convert PathBuf to String")
+        }
+        None => eprintln!("Error: could not get user home directory"),
+    }
+
+    let backlight_default_device_path: String = format!("{}/.config/rlight", user_home_dir);
+    let mut backlight_default_device: String = String::new();
+    if path::Path::new(&backlight_default_device_path).exists() {
+        backlight_default_device = fs::read_to_string(backlight_default_device_path)
+            .unwrap()
+            .trim_end()
+            .to_string();
+    }
+
+    backlight_default_device
+}
+
+fn get_backlight_brightness(
+    backlight_brightness_path: String,
+    backlight_device: String,
+) -> (u32, u32) {
+    let backlight_max_brightness_path: String = format!("{}/max_brightness", backlight_device);
+
+    let backlight_brightness: u32 = fs::read_to_string(backlight_brightness_path.clone())
+        .unwrap()
+        .trim_end()
+        .parse()
+        .unwrap();
+
+    let backlight_max_brightness: u32 = fs::read_to_string(backlight_max_brightness_path.clone())
+        .unwrap()
+        .trim_end()
+        .parse()
+        .unwrap();
+
+    (backlight_brightness, backlight_max_brightness)
+}
+
+fn write_backlight_brightness(backlight_brightness_path: String, brightness: u32) {
     match fs::write(backlight_brightness_path.clone(), brightness.to_string()) {
         Ok(t) => t,
         Err(e) => eprintln!(
