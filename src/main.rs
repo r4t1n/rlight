@@ -69,8 +69,6 @@ fn main() {
         absolute_brightness = backlight_max_brightness;
     };
 
-    println!("{}", absolute_brightness);
-
     write_backlight_brightness(backlight_brightness_path, absolute_brightness);
 }
 
