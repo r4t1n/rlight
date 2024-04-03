@@ -19,7 +19,7 @@ fn main() {
 
     if args.list {
         list_backlight_device_names(backlight_devices.clone());
-    }
+    };
 
     let backlight_default_device: String = get_backlight_default_device();
     let backlight_device: String = if backlight_default_device.is_empty() {
@@ -37,7 +37,7 @@ fn main() {
             (backlight_brightness as f32 / backlight_max_brightness as f32 * 100.0).round();
         println!("{}%", brightness);
         process::exit(0);
-    }
+    };
 
     let operation: char = if args.brightness.starts_with('+') {
         '+'
@@ -49,20 +49,27 @@ fn main() {
 
     let user_brightness: u8 = args
         .brightness
-        .replace(&['%', '+', '_'], "")
+        .replace(['%', '+', '_'], "")
         .parse()
         .unwrap();
 
     if user_brightness > 100 {
         eprintln!("Error: can not set brightness to over 100%");
         process::exit(1);
-    }
+    };
 
-    let absolute_brightness: u32 = match operation {
+    let mut absolute_brightness: u32 = match operation {
         '+' => backlight_brightness + backlight_max_brightness * user_brightness as u32 / 100,
-        '-' => backlight_brightness - backlight_max_brightness * user_brightness as u32 / 100,
+        '-' => backlight_brightness
+            .saturating_sub(backlight_max_brightness * user_brightness as u32 / 100),
         _ => backlight_max_brightness * user_brightness as u32 / 100,
     };
+
+    if absolute_brightness > backlight_max_brightness {
+        absolute_brightness = backlight_max_brightness;
+    };
+
+    println!("{}", absolute_brightness);
 
     write_backlight_brightness(backlight_brightness_path, absolute_brightness);
 }
@@ -86,7 +93,7 @@ fn get_backlight_devices() -> Vec<String> {
     if backlight_devices.is_empty() {
         eprintln!("Error: no backlight devices found in '{sys_backlight_path}'");
         process::exit(1);
-    }
+    };
 
     backlight_devices
 }
@@ -121,7 +128,7 @@ fn get_backlight_default_device() -> String {
                 .expect("Error: could not convert PathBuf to String")
         }
         None => eprintln!("Error: could not get user home directory"),
-    }
+    };
 
     let backlight_default_device_path: String = format!("{}/.config/rlight", user_home_dir);
     let mut backlight_default_device: String = String::new();
@@ -130,7 +137,7 @@ fn get_backlight_default_device() -> String {
             .unwrap()
             .trim_end()
             .to_string();
-    }
+    };
 
     backlight_default_device
 }
@@ -162,5 +169,5 @@ fn write_backlight_brightness(backlight_brightness_path: String, brightness: u32
         Err(e) => eprintln!(
             "Error writing to backlight device at '{backlight_brightness_path}': {e}\nHave you added yourself to the 'video' group?"
         ),
-    }
+    };
 }
