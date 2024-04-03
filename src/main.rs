@@ -11,6 +11,9 @@ struct Args {
 
     #[clap(short, long)]
     list: bool,
+
+    #[clap(short, long, default_value_t = 0)]
+    set: u8,
 }
 
 fn main() {
@@ -21,7 +24,14 @@ fn main() {
         list_backlight_device_names(backlight_devices.clone());
     };
 
-    let backlight_default_device: String = get_backlight_default_device();
+    let backlight_default_device_path: String = get_backlight_default_device_path();
+
+    if args.set != 0 {
+        println!("SET");
+    }
+
+    let backlight_default_device: String =
+        get_backlight_default_device(backlight_default_device_path);
     let backlight_device: String = if backlight_default_device.is_empty() {
         backlight_devices[0].to_string()
     } else {
@@ -116,8 +126,11 @@ fn list_backlight_device_names(backlight_devices: Vec<String>) {
     process::exit(0);
 }
 
-fn get_backlight_default_device() -> String {
+fn get_backlight_default_device_path() -> String {
     let mut user_home_dir: String = String::new();
+
+    // Using env::home_dir() is fine since this is only for Unix based systems ;3
+    #[allow(deprecated)]
     match env::home_dir() {
         Some(home_dir) => {
             user_home_dir = home_dir
@@ -125,16 +138,29 @@ fn get_backlight_default_device() -> String {
                 .into_string()
                 .expect("Error: could not convert PathBuf to String")
         }
-        None => eprintln!("Error: could not get user home directory"),
+        None => eprintln!("Error: could not get the user home directory"),
     };
 
     let backlight_default_device_path: String = format!("{}/.config/rlight", user_home_dir);
+
+    backlight_default_device_path
+}
+
+fn get_backlight_default_device(backlight_default_device_path: String) -> String {
     let mut backlight_default_device: String = String::new();
     if path::Path::new(&backlight_default_device_path).exists() {
         backlight_default_device = fs::read_to_string(backlight_default_device_path)
             .unwrap()
             .trim_end()
             .to_string();
+    } else {
+        match fs::File::create(backlight_default_device_path.clone()) {
+            Ok(t) => t,
+            Err(err) => panic!(
+                "Error: failed to create config file at '{}': {err}",
+                backlight_default_device_path
+            ),
+        };
     };
 
     backlight_default_device
@@ -164,8 +190,8 @@ fn get_backlight_brightness(
 fn write_backlight_brightness(backlight_brightness_path: String, brightness: u32) {
     match fs::write(backlight_brightness_path.clone(), brightness.to_string()) {
         Ok(t) => t,
-        Err(e) => eprintln!(
-            "Error writing to backlight device at '{backlight_brightness_path}': {e}\nHave you added yourself to the 'video' group?"
+        Err(err) => eprintln!(
+            "Error writing to backlight device at '{backlight_brightness_path}': {err}\nHave you added yourself to the 'video' group?"
         ),
     };
 }
