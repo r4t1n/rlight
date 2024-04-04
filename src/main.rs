@@ -30,30 +30,33 @@ fn main() {
     if args.set != 0 {
         println!(
             "[{}]: setting as the default backlight device",
-            backlight_devices[args.set as usize - 1].replace("/sys/class/backlight/", "")
+            backlight_devices[(args.set - 1) as usize].replace("/sys/class/backlight/", "")
         );
         rlight::set_backlight_default_device(
             backlight_default_device_path.clone(),
-            backlight_devices[args.set as usize - 1].to_owned(),
+            backlight_devices[(args.set - 1) as usize].to_owned(),
         );
         process::exit(0);
     };
 
     let backlight_device: String;
 
-    let backlight_default_device: String =
-        rlight::get_backlight_default_device(backlight_default_device_path.clone());
-
-    if backlight_default_device.is_empty() {
-        backlight_device = backlight_devices[0].to_owned();
-        rlight::set_backlight_default_device(
-            backlight_default_device_path,
-            backlight_devices[0].to_owned(),
-        );
+    if args.device != 0 {
+        backlight_device = backlight_devices[(args.device - 1) as usize].to_owned();
     } else {
-        backlight_device = backlight_default_device;
-    }
+        let backlight_default_device: String =
+            rlight::get_backlight_default_device(backlight_default_device_path.clone());
 
+        if backlight_default_device.is_empty() {
+            backlight_device = backlight_devices[0].to_owned();
+            rlight::set_backlight_default_device(
+                backlight_default_device_path,
+                backlight_devices[0].to_owned(),
+            );
+        } else {
+            backlight_device = backlight_default_device;
+        }
+    }
 
     let backlight_brightness_path: String = format!("{}/brightness", backlight_device);
     let (backlight_brightness, backlight_max_brightness): (u32, u32) =
