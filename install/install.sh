@@ -1,6 +1,6 @@
 #!/bin/bash
 
-target="target/release/rlight"
+target="../target/release/rlight"
 target_path="/usr/local/bin"
 
 udev_rules="90-rlight.rules"
