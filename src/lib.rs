@@ -26,6 +26,7 @@ pub fn get_backlight_brightness(
 
 pub fn get_backlight_default_device(backlight_default_device_path: String) -> String {
     let mut backlight_default_device: String = String::new();
+
     if path::Path::new(&backlight_default_device_path).exists() {
         backlight_default_device = fs::read_to_string(backlight_default_device_path)
             .unwrap()
@@ -35,8 +36,8 @@ pub fn get_backlight_default_device(backlight_default_device_path: String) -> St
         match fs::File::create(backlight_default_device_path.clone()) {
             Ok(t) => t,
             Err(err) => panic!(
-                "Error: failed to create config file at '{}': {err}",
-                backlight_default_device_path
+                "Error: failed to create config file at '{}': {}",
+                backlight_default_device_path, err
             ),
         };
     };
@@ -106,11 +107,24 @@ pub fn list_backlight_device_names(backlight_devices: Vec<String>) {
     }
 }
 
+pub fn set_backlight_default_device(
+    backlight_default_device_path: String,
+    backlight_device: String,
+) {
+    match fs::write(backlight_default_device_path.clone(), backlight_device) {
+        Ok(t) => t,
+        Err(err) => eprintln!(
+            "Error writing to default backlight device file at '{}': {}",
+            backlight_default_device_path, err
+        ),
+    };
+}
+
 pub fn write_backlight_brightness(backlight_brightness_path: String, brightness: u32) {
     match fs::write(backlight_brightness_path.clone(), brightness.to_string()) {
         Ok(t) => t,
         Err(err) => eprintln!(
-            "Error writing to backlight device at '{backlight_brightness_path}': {err}\nHave you added yourself to the 'video' group?"
+            "Error writing to backlight device at '{}': {}\nHave you added yourself to the 'video' group?", backlight_brightness_path, err
         ),
     };
 }

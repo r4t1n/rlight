@@ -4,9 +4,9 @@ rlight is a CLI program to control backlight brightness. It uses the Linux backl
 
 ## Features
 - Percent based brightness controls
-- Increment or decrement brightness with "+" or "_" operators
+- Increment or decrement brightness with "+" and "_" operators
 - List all backlight devices
-- Set default backlight device (working on it ;3)
+- Set a default backlight device
 
 ## Usage
 ```
