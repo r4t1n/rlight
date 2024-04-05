@@ -39,26 +39,12 @@ fn main() {
         process::exit(0);
     };
 
-    let backlight_device: String;
-
-    if args.device != 0 {
+    let backlight_device: String = if args.device != 0 {
         let backlight_devices: Vec<String> = rlight::get_backlight_devices();
-        backlight_device = backlight_devices[(args.device - 1) as usize].to_owned();
+        backlight_devices[(args.device - 1) as usize].to_owned()
     } else {
-        let backlight_default_device: String =
-            rlight::get_backlight_default_device(backlight_default_device_path.clone());
-
-        if backlight_default_device.is_empty() {
-            let backlight_devices: Vec<String> = rlight::get_backlight_devices();
-            backlight_device = backlight_devices[0].to_owned();
-            rlight::set_backlight_default_device(
-                backlight_default_device_path,
-                backlight_devices[0].to_owned(),
-            );
-        } else {
-            backlight_device = backlight_default_device;
-        }
-    }
+        handle_default_backlight_device(backlight_default_device_path)
+    };
 
     let backlight_brightness_path: String = format!("{}/brightness", backlight_device);
     let (backlight_brightness, backlight_max_brightness): (u32, u32) =
@@ -90,6 +76,22 @@ fn main() {
         process::exit(1);
     };
 
+    handle_writing_backlight_brightness(
+        backlight_brightness_path,
+        backlight_brightness,
+        backlight_max_brightness,
+        user_brightness,
+        operation,
+    );
+}
+
+fn handle_writing_backlight_brightness(
+    backlight_brightness_path: String,
+    backlight_brightness: u32,
+    backlight_max_brightness: u32,
+    user_brightness: u8,
+    operation: char,
+) {
     let mut absolute_brightness: u32 = match operation {
         '+' => backlight_brightness + backlight_max_brightness * user_brightness as u32 / 100,
         '-' => backlight_brightness
@@ -102,4 +104,23 @@ fn main() {
     };
 
     rlight::write_backlight_brightness(backlight_brightness_path, absolute_brightness);
+}
+
+fn handle_default_backlight_device(backlight_default_device_path: String) -> String {
+    let backlight_device: String;
+    let backlight_default_device: String =
+        rlight::get_backlight_default_device(backlight_default_device_path.clone());
+
+    if backlight_default_device.is_empty() {
+        let backlight_devices: Vec<String> = rlight::get_backlight_devices();
+        backlight_device = backlight_devices[0].to_owned();
+        rlight::set_backlight_default_device(
+            backlight_default_device_path,
+            backlight_devices[0].to_owned(),
+        );
+    } else {
+        backlight_device = backlight_default_device.clone();
+    }
+
+    backlight_device
 }
