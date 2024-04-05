@@ -70,5 +70,5 @@ cargo build --release
 ```
 
 ```
-sudo ./install/install.sh
+sudo ./install.sh
 ```
