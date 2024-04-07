@@ -66,9 +66,9 @@ sudo gpasswd -a <user> video
 ```
 
 ```
-cargo build --release
+make
 ```
 
 ```
-sudo ./install.sh
+sudo make install
 ```
