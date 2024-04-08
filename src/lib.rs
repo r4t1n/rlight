@@ -124,6 +124,17 @@ pub fn set_backlight_default_device(
     backlight_default_device_path: String,
     backlight_device: String,
 ) {
+    let backlight_device_name: ColoredString = format!(
+        "[{}]",
+        backlight_device.replace("/sys/class/backlight/", "")
+    )
+    .white()
+    .bold();
+    println!(
+        "{}: setting as the default backlight device",
+        backlight_device_name
+    );
+
     match fs::write(backlight_default_device_path.clone(), backlight_device) {
         Ok(t) => t,
         Err(err) => eprintln!(

@@ -1,6 +1,4 @@
 use clap::Parser;
-use colored::ColoredString;
-use colored::Colorize;
 use std::process;
 
 #[derive(Parser)]
@@ -31,13 +29,8 @@ fn main() {
 
     if args.set != 0 {
         let backlight_devices: Vec<String> = rlight::get_backlight_devices();
-        let backlight_device: ColoredString = format!("[{}]", &backlight_devices[(args.set - 1) as usize].replace("/sys/class/backlight/", "")).white().bold();
-        println!(
-            "{}: setting as the default backlight device",
-            backlight_device
-        );
-
         let backlight_default_device_path: String = rlight::get_backlight_default_device_path();
+
         rlight::set_backlight_default_device(
             backlight_default_device_path.clone(),
             backlight_devices[(args.set - 1) as usize].to_owned(),
