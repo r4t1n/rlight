@@ -1,8 +1,9 @@
-target := target/release/rlight
-target_path := /usr/local/bin
+program := rlight
+target := target/release/$(program)
+target_path := /usr/local/bin/
 
 udev_rules := 90-rlight.rules
-udev_rules_path := /lib/udev/rules.d
+udev_rules_path := /lib/udev/rules.d/
 
 build:
 	cargo build --release
@@ -18,4 +19,4 @@ install: check-root
 	cp $(udev_rules) $(udev_rules_path)
 
 uninstall: check-root
-	rm $(target_path)/rlight $(udev_rules_path)/$(udev_rules)
+	rm $(target_path)/$(program) $(udev_rules_path)/$(udev_rules)
