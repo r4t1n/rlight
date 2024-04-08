@@ -1,3 +1,5 @@
+use colored::ColoredString;
+use colored::Colorize;
 use std::env;
 use std::fs;
 use std::path;
@@ -95,16 +97,17 @@ pub fn list_backlight_device_names(
 ) {
     let mut backlight_device_list: Vec<String> = Vec::new();
     let mut index: u8 = 1;
-    let mut is_backlight_default_device: &str = "";
+    let index_text: ColoredString = format!("[{}]", index).white().bold(); // Needs to be set to white before bold, else it becomes blue for some reason
+    let mut is_backlight_default_device: ColoredString = "".normal();
 
     for backlight_device in backlight_devices.iter() {
         if *backlight_device == backlight_default_device {
-            is_backlight_default_device = " *";
+            is_backlight_default_device = "*".blue().blink();
         };
 
         backlight_device_list.push(format!(
-            "[{}] {}{}",
-            index,
+            "{} {} {}",
+            index_text,
             backlight_device.replace("/sys/class/backlight/", ""),
             is_backlight_default_device
         ));
