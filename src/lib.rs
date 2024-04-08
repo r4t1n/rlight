@@ -89,20 +89,28 @@ pub fn get_backlight_devices() -> Vec<String> {
     backlight_devices
 }
 
-pub fn list_backlight_device_names(backlight_devices: Vec<String>) {
-    let mut backlight_device_names: Vec<String> = Vec::new();
+pub fn list_backlight_device_names(
+    backlight_devices: Vec<String>,
+    backlight_default_device: String,
+) {
+    let mut backlight_device_list: Vec<String> = Vec::new();
     let mut index: u8 = 1;
+    let mut is_backlight_default_device: &str = "";
     for backlight_device in backlight_devices.iter() {
-        backlight_device_names.push(format!(
-            "[{}] {}",
+        if *backlight_device == backlight_default_device {
+            is_backlight_default_device = " *";
+        }
+        backlight_device_list.push(format!(
+            "[{}] {}{}",
             index,
-            backlight_device.replace("/sys/class/backlight/", "")
+            backlight_device.replace("/sys/class/backlight/", ""),
+            is_backlight_default_device
         ));
 
         index += 1;
     }
 
-    for backlight_device_name in backlight_device_names.iter() {
+    for backlight_device_name in backlight_device_list.iter() {
         println!("{}", backlight_device_name)
     }
 }

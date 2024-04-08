@@ -20,11 +20,12 @@ fn main() {
     let args: Args = Args::parse();
 
     if args.list {
-        rlight::list_backlight_device_names(rlight::get_backlight_devices());
+        rlight::list_backlight_device_names(
+            rlight::get_backlight_devices(),
+            rlight::get_backlight_default_device(rlight::get_backlight_default_device_path()),
+        );
         process::exit(0);
     };
-
-    let backlight_default_device_path: String = rlight::get_backlight_default_device_path();
 
     if args.set != 0 {
         let backlight_devices: Vec<String> = rlight::get_backlight_devices();
@@ -32,6 +33,7 @@ fn main() {
             "[{}]: setting as the default backlight device",
             backlight_devices[(args.set - 1) as usize].replace("/sys/class/backlight/", "")
         );
+        let backlight_default_device_path: String = rlight::get_backlight_default_device_path();
         rlight::set_backlight_default_device(
             backlight_default_device_path.clone(),
             backlight_devices[(args.set - 1) as usize].to_owned(),
@@ -43,6 +45,7 @@ fn main() {
         let backlight_devices: Vec<String> = rlight::get_backlight_devices();
         backlight_devices[(args.device - 1) as usize].to_owned()
     } else {
+        let backlight_default_device_path: String = rlight::get_backlight_default_device_path();
         handle_default_backlight_device(backlight_default_device_path)
     };
 
