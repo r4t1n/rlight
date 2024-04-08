@@ -78,7 +78,7 @@ pub fn get_backlight_devices() -> Vec<String> {
                 .into_os_string()
                 .into_string()
                 .unwrap(),
-        )
+        );
     }
 
     if backlight_devices.is_empty() {
@@ -96,10 +96,12 @@ pub fn list_backlight_device_names(
     let mut backlight_device_list: Vec<String> = Vec::new();
     let mut index: u8 = 1;
     let mut is_backlight_default_device: &str = "";
+
     for backlight_device in backlight_devices.iter() {
         if *backlight_device == backlight_default_device {
             is_backlight_default_device = " *";
-        }
+        };
+
         backlight_device_list.push(format!(
             "[{}] {}{}",
             index,

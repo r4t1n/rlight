@@ -33,6 +33,7 @@ fn main() {
             "[{}]: setting as the default backlight device",
             backlight_devices[(args.set - 1) as usize].replace("/sys/class/backlight/", "")
         );
+
         let backlight_default_device_path: String = rlight::get_backlight_default_device_path();
         rlight::set_backlight_default_device(
             backlight_default_device_path.clone(),
