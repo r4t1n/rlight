@@ -102,7 +102,7 @@ pub fn list_backlight_device_names(
 
     for backlight_device in backlight_devices.iter() {
         if *backlight_device == backlight_default_device {
-            is_backlight_default_device = "*".blue().blink();
+            is_backlight_default_device = "*".cyan().blink();
         };
 
         backlight_device_list.push(format!(
